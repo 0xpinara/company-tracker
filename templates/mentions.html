@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Mentions - ScaleX Ventures Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-newspaper text-primary me-2"></i>
+                    Recent Mentions
+                </h1>
+                <p class="text-muted">Latest news and social media mentions of portfolio companies</p>
+            </div>
+            <div>
+                <button class="btn btn-outline-secondary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <label for="companyFilter" class="form-label">Filter by Company</label>
+                        <select class="form-select" id="companyFilter" onchange="filterMentions()">
+                            <option value="">All Companies</option>
+                            {% for company in mentions | map(attribute='company_name') | unique | sort %}
+                            <option value="{{ company }}">{{ company }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sourceFilter" class="form-label">Filter by Source</label>
+                        <select class="form-select" id="sourceFilter" onchange="filterMentions()">
+                            <option value="">All Sources</option>
+                            {% for source in mentions | map(attribute='source') | unique | sort %}
+                            <option value="{{ source }}">{{ source }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="sentimentFilter" class="form-label">Filter by Sentiment</label>
+                        <select class="form-select" id="sentimentFilter" onchange="filterMentions()">
+                            <option value="">All Sentiments</option>
+                            <option value="positive">Positive</option>
+                            <option value="neutral">Neutral</option>
+                            <option value="negative">Negative</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="searchFilter" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="searchFilter" placeholder="Search mentions..." onkeyup="filterMentions()">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mentions Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Mentions (<span id="mentionCount">{{ mentions|length }}</span>)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="mentionsTable">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Title</th>
+                                <th>Source</th>
+                                <th>Date</th>
+                                <th>Sentiment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mention in mentions %}
+                            <tr class="mention-row" 
+                                data-company="{{ mention.company_name }}"
+                                data-source="{{ mention.source }}"
+                                data-sentiment="{{ mention.sentiment_score }}"
+                                data-title="{{ mention.title | lower }}"
+                                data-content="{{ mention.content | lower }}">
+                                <td>
+                                    <span class="badge bg-primary">{{ mention.company_name }}</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <a href="{{ mention.url }}" target="_blank" class="text-decoration-none fw-bold">
+                                            {{ mention.title[:80] }}{% if mention.title|length > 80 %}...{% endif %}
+                                        </a>
+                                        {% if mention.content %}
+                                        <small class="text-muted mt-1">
+                                            {{ mention.content[:100] }}{% if mention.content|length > 100 %}...{% endif %}
+                                        </small>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <small class="text-muted">{{ mention.source }}</small>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {% if mention.published_date %}
+                                            {{ mention.published_date[:10] }}
+                                            <br><span class="text-muted" style="font-size: 0.75em;">{{ mention.published_date[11:16] if mention.published_date|length > 10 else '' }}</span>
+                                        {% else %}
+                                            {{ mention.created_at[:10] }}
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% if mention.sentiment_score > 0.1 %}
+                                        <span class="badge bg-success">Positive</span>
+                                    {% elif mention.sentiment_score < -0.1 %}
+                                        <span class="badge bg-danger">Negative</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Neutral</span>
+                                    {% endif %}
+                                    <br><small class="text-muted">{{ "%.2f"|format(mention.sentiment_score) }}</small>
+                                </td>
+                                <td>
+                                    <a href="{{ mention.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterMentions() {
+    const companyFilter = document.getElementById('companyFilter').value.toLowerCase();
+    const sourceFilter = document.getElementById('sourceFilter').value.toLowerCase();
+    const sentimentFilter = document.getElementById('sentimentFilter').value;
+    const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+    
+    const rows = document.querySelectorAll('.mention-row');
+    let visibleCount = 0;
+    
+    rows.forEach(row => {
+        const company = row.dataset.company.toLowerCase();
+        const source = row.dataset.source.toLowerCase();
+        const sentiment = parseFloat(row.dataset.sentiment);
+        const title = row.dataset.title;
+        const content = row.dataset.content;
+        
+        let show = true;
+        
+        // Company filter
+        if (companyFilter && !company.includes(companyFilter)) {
+            show = false;
+        }
+        
+        // Source filter
+        if (sourceFilter && !source.includes(sourceFilter)) {
+            show = false;
+        }
+        
+        // Sentiment filter
+        if (sentimentFilter) {
+            if (sentimentFilter === 'positive' && sentiment <= 0.1) show = false;
+            if (sentimentFilter === 'negative' && sentiment >= -0.1) show = false;
+            if (sentimentFilter === 'neutral' && (sentiment > 0.1 || sentiment < -0.1)) show = false;
+        }
+        
+        // Search filter
+        if (searchFilter && !title.includes(searchFilter) && !content.includes(searchFilter)) {
+            show = false;
+        }
+        
+        if (show) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('mentionCount').textContent = visibleCount;
+}
+
+function refreshData() {
+    location.reload();
+}
+
+// Initialize filters
+document.addEventListener('DOMContentLoaded', function() {
+    filterMentions();
+});
+</script>
+{% endblock %}

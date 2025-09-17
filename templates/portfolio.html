@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Portfolio - ScaleX Ventures Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-building text-primary me-2"></i>
+                    Portfolio Companies
+                </h1>
+                <p class="text-muted">Complete overview of {{ total_companies }} ScaleX Ventures portfolio companies</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Fund I Companies -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-rocket me-2"></i>Fund I Companies ({{ portfolio_companies | selectattr('fund', 'equalto', 'FUND I') | list | length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for company in portfolio_companies %}
+                        {% if company.fund == 'FUND I' %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-primary">{{ company.name }}</h6>
+                                    <p class="card-text small text-muted">{{ company.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-globe me-1"></i>{{ company.website }}
+                                        </small>
+                                        <span class="badge bg-primary">Fund I</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acquired Companies -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-trophy me-2"></i>Acquired Companies ({{ portfolio_companies | selectattr('fund', 'equalto', 'ACQUIRED') | list | length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for company in portfolio_companies %}
+                        {% if company.fund == 'ACQUIRED' %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-success">{{ company.name }}</h6>
+                                    <p class="card-text small text-muted">{{ company.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-globe me-1"></i>{{ company.website }}
+                                        </small>
+                                        <span class="badge bg-success">Acquired</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Angel Investments -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-angel me-2"></i>Angel Investments ({{ portfolio_companies | selectattr('fund', 'equalto', 'ANGEL') | list | length }})
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for company in portfolio_companies %}
+                        {% if company.fund == 'ANGEL' %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-info">{{ company.name }}</h6>
+                                    <p class="card-text small text-muted">{{ company.description }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-globe me-1"></i>{{ company.website }}
+                                        </small>
+                                        <span class="badge bg-info">Angel</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Portfolio Summary
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h2 class="text-primary">{{ portfolio_companies | selectattr('fund', 'equalto', 'FUND I') | list | length }}</h2>
+                            <p class="text-muted mb-0">Fund I Companies</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h2 class="text-success">{{ portfolio_companies | selectattr('fund', 'equalto', 'ACQUIRED') | list | length }}</h2>
+                            <p class="text-muted mb-0">Acquired Companies</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h2 class="text-info">{{ portfolio_companies | selectattr('fund', 'equalto', 'ANGEL') | list | length }}</h2>
+                            <p class="text-muted mb-0">Angel Investments</p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h2 class="text-dark">{{ total_companies }}</h2>
+                        <p class="text-muted mb-0">Total Companies</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

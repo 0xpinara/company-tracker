@@ -1,0 +1,341 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ScaleX Ventures Monitor{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Header -->
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h2 mb-1">
+                    <i class="fas fa-chart-line text-primary me-2"></i>
+                    Portfolio Dashboard
+                </h1>
+                <p class="text-muted">Real-time monitoring of {{ total_companies }} ScaleX Ventures portfolio companies</p>
+            </div>
+            <div>
+                <button class="btn btn-primary" onclick="runMonitoring()">
+                    <i class="fas fa-play me-1"></i>Run Monitoring
+                </button>
+                <button class="btn btn-success" onclick="sendSlackTest()">
+                    <i class="fas fa-paper-plane me-1"></i>Send Slack Test
+                </button>
+                <button class="btn btn-outline-secondary" onclick="refreshData()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.total_mentions }}</h4>
+                        <p class="card-text">Total Mentions</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-newspaper fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.recent_mentions }}</h4>
+                        <p class="card-text">Recent (24h)</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ total_companies }}</h4>
+                        <p class="card-text">Companies Monitored</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h4 class="card-title">{{ stats.company_mentions|length }}</h4>
+                        <p class="card-text">Active Companies</p>
+                    </div>
+                    <div class="align-self-center">
+                        <i class="fas fa-chart-bar fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Mentions by Company
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="companyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>Mentions by Source
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="sourceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Portfolio Breakdown -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-sitemap me-2"></i>Portfolio Breakdown
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h3 class="text-primary">{{ fund_i_companies }}</h3>
+                            <p class="text-muted mb-0">Fund I Companies</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h3 class="text-success">{{ acquired_companies }}</h3>
+                            <p class="text-muted mb-0">Acquired Companies</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h3 class="text-info">{{ angel_companies }}</h3>
+                        <p class="text-muted mb-0">Angel Investments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Mentions -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list me-2"></i>Recent Mentions
+                </h5>
+                <a href="{{ url_for('mentions') }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Company</th>
+                                <th>Title</th>
+                                <th>Source</th>
+                                <th>Date</th>
+                                <th>Sentiment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mention in stats.recent_details[:10] %}
+                            <tr>
+                                <td>
+                                    <span class="badge bg-primary">{{ mention.company_name }}</span>
+                                </td>
+                                <td>
+                                    <a href="{{ mention.url }}" target="_blank" class="text-decoration-none">
+                                        {{ mention.title[:60] }}{% if mention.title|length > 60 %}...{% endif %}
+                                    </a>
+                                </td>
+                                <td>{{ mention.source }}</td>
+                                <td>{{ mention.created_at[:10] }}</td>
+                                <td>
+                                    {% if mention.sentiment_score > 0.1 %}
+                                        <span class="badge bg-success">Positive</span>
+                                    {% elif mention.sentiment_score < -0.1 %}
+                                        <span class="badge bg-danger">Negative</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Neutral</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Running Portfolio Monitoring...</h5>
+                <p class="text-muted">This may take a few moments to complete.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Company mentions chart
+const companyData = {{ stats.company_mentions[:10] | tojson }};
+const companyLabels = companyData.map(item => item.company_name);
+const companyCounts = companyData.map(item => item.count);
+
+const companyCtx = document.getElementById('companyChart').getContext('2d');
+new Chart(companyCtx, {
+    type: 'doughnut',
+    data: {
+        labels: companyLabels,
+        datasets: [{
+            data: companyCounts,
+            backgroundColor: [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Source mentions chart
+const sourceData = {{ stats.source_mentions[:8] | tojson }};
+const sourceLabels = sourceData.map(item => item.source);
+const sourceCounts = sourceData.map(item => item.count);
+
+const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+new Chart(sourceCtx, {
+    type: 'bar',
+    data: {
+        labels: sourceLabels,
+        datasets: [{
+            label: 'Mentions',
+            data: sourceCounts,
+            backgroundColor: '#36A2EB'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Functions
+function runMonitoring() {
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+    
+    fetch('/api/run-monitoring')
+        .then(response => response.json())
+        .then(data => {
+            modal.hide();
+            if (data.success) {
+                showAlert('success', 'Monitoring completed successfully!');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showAlert('danger', 'Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            modal.hide();
+            showAlert('danger', 'Error running monitoring: ' + error);
+        });
+}
+
+function refreshData() {
+    location.reload();
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+function sendSlackTest() {
+    fetch('/api/slack-test', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', 'Slack test sent! Check your channel.');
+            } else {
+                showAlert('danger', 'Slack test failed: ' + data.message);
+            }
+        })
+        .catch(err => showAlert('danger', 'Slack test error: ' + err));
+}
+</script>
+{% endblock %}
