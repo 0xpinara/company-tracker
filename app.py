@@ -107,7 +107,7 @@ def api_mentions():
     """API endpoint for recent mentions"""
     conn = get_db_connection()
     mentions = conn.execute(
-        'SELECT * FROM mentions ORDER BY created_at DESC LIMIT 50'
+        'SELECT * FROM mentions ORDER BY published_date DESC, created_at DESC LIMIT 50'
     ).fetchall()
     conn.close()
     return jsonify([dict(row) for row in mentions])
@@ -155,7 +155,7 @@ def mentions():
     """Recent mentions page"""
     conn = get_db_connection()
     mentions = conn.execute(
-        'SELECT * FROM mentions ORDER BY created_at DESC LIMIT 100'
+        'SELECT * FROM mentions ORDER BY published_date DESC, created_at DESC LIMIT 100'
     ).fetchall()
     conn.close()
     return render_template('mentions.html', mentions=[dict(row) for row in mentions])

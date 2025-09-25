@@ -55,9 +55,16 @@
                             <option value="negative">Negative</option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <label for="searchFilter" class="form-label">Search</label>
                         <input type="text" class="form-control" id="searchFilter" placeholder="Search mentions..." onkeyup="filterMentions()">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="sortFilter" class="form-label">Sort by Date</label>
+                        <select class="form-select" id="sortFilter" onchange="sortMentions()">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -94,7 +101,8 @@
                                 data-source="{{ mention.source }}"
                                 data-sentiment="{{ mention.sentiment_score }}"
                                 data-title="{{ mention.title | lower }}"
-                                data-content="{{ mention.content | lower }}">
+                                data-content="{{ mention.content | lower }}"
+                                data-date="{{ mention.published_date or mention.created_at }}">
                                 <td>
                                     <span class="badge bg-primary">{{ mention.company_name }}</span>
                                 </td>
@@ -200,6 +208,30 @@ function filterMentions() {
     });
     
     document.getElementById('mentionCount').textContent = visibleCount;
+}
+
+function sortMentions() {
+    const sortValue = document.getElementById('sortFilter').value;
+    const tbody = document.querySelector('#mentionsTable tbody');
+    const rows = Array.from(tbody.querySelectorAll('.mention-row'));
+    
+    rows.sort((a, b) => {
+        const dateA = new Date(a.dataset.date);
+        const dateB = new Date(b.dataset.date);
+        
+        if (sortValue === 'oldest') {
+            return dateA - dateB;
+        } else {
+            return dateB - dateA;
+        }
+    });
+    
+    // Clear tbody and append sorted rows
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Reapply filters after sorting
+    filterMentions();
 }
 
 function refreshData() {

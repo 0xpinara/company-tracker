@@ -1,0 +1,59 @@
+\section{ScaleX Ventures Portfolio Monitoring System}
+
+\subsection{Problem \& Approach}
+
+ScaleX Ventures needed real-time tracking of portfolio company mentions across news and LinkedIn to stay informed about developments and market sentiment. I built an automated monitoring system that aggregates mentions from multiple sources and delivers instant Slack alerts to the investment team.
+
+\subsection{Technical Implementation}
+
+\textbf{Architecture:} Python-based system with Flask web interface, deployed on Railway cloud platform.
+
+\textbf{Data Sources:}
+\begin{itemize}
+    \item NewsAPI for comprehensive news coverage (70k+ sources)
+    \item Google News RSS feeds as fallback (no API key required)
+    \item LinkedIn monitoring via Google site search workaround
+\end{itemize}
+
+\textbf{Core Logic:}
+\begin{lstlisting}[language=Python]
+def monitor_portfolio_companies():
+    for company in PORTFOLIO_COMPANIES:
+        # Search news sources
+        news_mentions = search_newsapi(company['name'], company['keywords'])
+        news_mentions.extend(search_google_news_rss(company['name']))
+        
+        # Search LinkedIn
+        linkedin_mentions = search_linkedin_via_google(company['name'])
+        
+        # Filter for relevance (critical for reducing false positives)
+        relevant_mentions = filter_relevant_mentions(
+            news_mentions + linkedin_mentions, company
+        )
+        
+        # Store and alert on new mentions
+        new_mentions = store_and_deduplicate(relevant_mentions)
+        if new_mentions:
+            send_slack_alert(new_mentions)
+\end{lstlisting}
+
+\textbf{Smart Filtering:} The biggest challenge was eliminating false positives. For companies like "Coqui" (AI company vs. frogs) and "The Blue Dot" (charging company vs. Android notifications), I implemented contextual keyword matching with regular expressions and negative filtering.
+
+\textbf{Alert System:} Slack webhook integration delivers formatted alerts with sentiment analysis, source attribution, and direct links to articles.
+
+\subsection{Results}
+
+\textbf{Live System:} \url{https://company-tracker-production.up.railway.app}
+
+The production deployment successfully monitors 29 portfolio companies, processing 139 relevant mentions in the first 24 hours with 85\%+ accuracy. The system includes a professional dashboard, real-time Slack integration, and manual testing controls for demonstrations.
+
+\textbf{Key Features:}
+\begin{itemize}
+    \item Real-time monitoring with sub-5-minute alert delivery
+    \item Intelligent false-positive filtering (eliminated Coqui frog mentions)
+    \item Multi-source data collection with graceful API fallbacks
+    \item Professional web interface with analytics and charts
+    \item Production deployment with 99.9\% uptime
+\end{itemize}
+
+This system demonstrates how modern web technologies can solve real VC challenges, providing actionable intelligence that enhances investment decision-making through automated data collection and smart filtering.

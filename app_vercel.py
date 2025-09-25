@@ -142,7 +142,7 @@ def get_recent_mentions(limit=100):
                 SELECT company_name, title, content, url, source, 
                        published_date, sentiment_score, created_at
                 FROM mentions 
-                ORDER BY created_at DESC 
+                ORDER BY published_date DESC, created_at DESC 
                 LIMIT ?
             """, (limit,))
             
