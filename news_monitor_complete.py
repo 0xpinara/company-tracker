@@ -140,6 +140,59 @@ class CompleteNewsMonitor:
         full_text = f"{title} {content}"
         
         # Special handling for problematic companies that have generic names (check first!)
+        if company['name'] == 'Finch':
+            # Exclude if it's about people with Finch as last name
+            person_indicators = [
+                'obituary', 'died', 'death', 'funeral', 'memorial',
+                'birthday', 'anniversary', 'wedding', 'married',
+                'graduated', 'student', 'teacher', 'professor',
+                'mayor', 'politician', 'election', 'candidate',
+                'chris finch', 'beth finch', 'tess finch', 'spencer finch',
+                'christine finch', 'evelyn finch', 'elisabeth finch',
+                'real estate agent', 'coach', 'athlete', 'player',
+                'timberwolves', 'nba', 'basketball', 'sports',
+                'olden polynice', 'grey\'s anatomy'
+            ]
+            
+            for indicator in person_indicators:
+                if indicator in full_text:
+                    return False
+                    
+            # Only include if it has business/tech context
+            business_keywords = [
+                'app', 'platform', 'software', 'startup', 'company',
+                'venue marketing', 'ai-powered', 'technology', 'funding',
+                'finch app', 'self care', 'productivity'
+            ]
+            
+            has_business_context = any(keyword in full_text for keyword in business_keywords)
+            if not has_business_context:
+                return False
+        
+        if company['name'] == 'Cerebra':
+            # Exclude cerebral palsy and medical mentions
+            medical_indicators = [
+                'cerebral palsy', 'brain injury', 'palsy',
+                'patient', 'medical', 'hospital', 'therapy', 'disability',
+                'neurological', 'treatment', 'delivery robot', 'mobility scooter',
+                'cerebral approach', 'cerebral arteries'
+            ]
+            
+            for indicator in medical_indicators:
+                if indicator in full_text:
+                    return False
+                    
+            # Only include if it has AI/tech context
+            ai_keywords = [
+                'ai', 'artificial intelligence', 'machine learning',
+                'computer vision', 'startup', 'funding', 'technology',
+                'ipo', 'stock', 'nvidia', 'chipmaker'
+            ]
+            
+            has_ai_context = any(keyword in full_text for keyword in ai_keywords)
+            if not has_ai_context:
+                return False
+                
         if company['name'] == 'Coqui':
             # Only match if it's clearly about the AI company, not frogs
             tech_indicators = ['ai', 'artificial intelligence', 'text-to-speech', 'tts', 'voice', 'speech', 'generative', 'coqui.ai']
