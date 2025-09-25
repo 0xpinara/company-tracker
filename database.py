@@ -211,6 +211,10 @@ class MentionDatabase:
                 "neurological", "treatment"
             ]
             
+            bluedot_false_positives = [
+                "bluedotliving.com", "bluedot living"
+            ]
+            
             deleted_count = 0
             
             # Remove Finch false positives
@@ -229,6 +233,15 @@ class MentionDatabase:
                     WHERE company_name = 'Cerebra' 
                     AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ?)
                 """, (f'%{pattern}%', f'%{pattern}%'))
+                deleted_count += cursor.rowcount
+            
+            # Remove The Blue Dot false positives (Bluedot Living magazine)
+            for pattern in bluedot_false_positives:
+                cursor.execute("""
+                    DELETE FROM mentions 
+                    WHERE company_name = 'The Blue Dot' 
+                    AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ? OR LOWER(source) LIKE ?)
+                """, (f'%{pattern}%', f'%{pattern}%', f'%{pattern}%'))
                 deleted_count += cursor.rowcount
             
             conn.commit()

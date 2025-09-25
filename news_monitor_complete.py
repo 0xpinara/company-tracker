@@ -201,6 +201,10 @@ class CompleteNewsMonitor:
             return False
         
         if company['name'] == 'The Blue Dot':
+            # Exclude Bluedot Living magazine articles (completely different company)
+            if 'bluedotliving.com' in full_text or 'bluedot living' in full_text:
+                return False
+                
             # Only match if it's clearly about the company, not Android blue dots
             # Check for negative indicators (Android, text messages, etc.)
             negative_indicators = ['android', 'text message', 'text messages', 'message', 'notification', 'unread']
