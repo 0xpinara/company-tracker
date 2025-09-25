@@ -192,6 +192,49 @@ class MentionDatabase:
             """, (status, error_message, alert_id))
             conn.commit()
     
+    def clean_false_positives(self) -> int:
+        """Remove false positive mentions from the database"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            
+            # Define false positive patterns
+            finch_false_positives = [
+                "beth finch", "chris finch", "tess finch", "spencer finch",
+                "christine finch", "evelyn finch", "elisabeth finch",
+                "obituary", "mayor", "timberwolves", "nba", "basketball",
+                "real estate agent", "grey's anatomy", "coach", "player"
+            ]
+            
+            cerebra_false_positives = [
+                "cerebral palsy", "cerebral", "brain injury", "palsy",
+                "patient", "medical", "hospital", "therapy", "disability",
+                "neurological", "treatment"
+            ]
+            
+            deleted_count = 0
+            
+            # Remove Finch false positives
+            for pattern in finch_false_positives:
+                cursor.execute("""
+                    DELETE FROM mentions 
+                    WHERE company_name = 'Finch' 
+                    AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ?)
+                """, (f'%{pattern}%', f'%{pattern}%'))
+                deleted_count += cursor.rowcount
+            
+            # Remove Cerebra false positives
+            for pattern in cerebra_false_positives:
+                cursor.execute("""
+                    DELETE FROM mentions 
+                    WHERE company_name = 'Cerebra' 
+                    AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ?)
+                """, (f'%{pattern}%', f'%{pattern}%'))
+                deleted_count += cursor.rowcount
+            
+            conn.commit()
+            logger.info(f"Removed {deleted_count} false positive mentions from database")
+            return deleted_count
+    
     def get_statistics(self) -> Dict:
         """Get monitoring statistics"""
         with sqlite3.connect(self.db_path) as conn:

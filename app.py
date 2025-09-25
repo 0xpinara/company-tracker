@@ -123,6 +123,25 @@ def api_run_monitoring():
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)})
 
+@app.route('/api/clean-false-positives')
+def api_clean_false_positives():
+    """API endpoint to clean false positive mentions"""
+    try:
+        from database import MentionDatabase
+        db = MentionDatabase()
+        deleted_count = db.clean_false_positives()
+        
+        return jsonify({
+            'success': True,
+            'message': f'Removed {deleted_count} false positive mentions',
+            'deleted_count': deleted_count
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        }), 500
+
 @app.route('/api/slack-test', methods=['POST'])
 def api_slack_test():
     """Send a simple Slack test message to verify webhook works"""
