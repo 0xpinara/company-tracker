@@ -9,7 +9,7 @@ from typing import List, Dict
 PORTFOLIO_COMPANIES = [
     {
         "name": "Finch",
-        "keywords": ["Finch", "venue marketing", "AI-powered platform marketing"],
+        "keywords": ["Finch app", "Finch platform", "venue marketing platform", "AI venue marketing", "Finch startup"],
         "description": "AI-powered platform to enhance venue marketing"
     },
     {

@@ -134,20 +134,84 @@ class NewsMonitor:
         """Check if an article is a relevant mention of the company"""
         title = article.get('title', '').lower()
         content = article.get('description', '').lower()
+        full_text = title + ' ' + content
+        
+        # Company-specific false positive filtering
+        if not self._company_specific_filter(full_text, company):
+            return False
         
         # Check if company name appears in title or content
         company_name_lower = company['name'].lower()
         if company_name_lower in title or company_name_lower in content:
-            return True
+            # Additional relevance check for company name mentions
+            if self._additional_relevance_check(full_text, company):
+                return True
         
         # Check for other relevant keywords
         for keyword in company['keywords']:
             if keyword.lower() in title or keyword.lower() in content:
                 # Additional relevance check to reduce false positives
-                if self._additional_relevance_check(title + ' ' + content, company):
+                if self._additional_relevance_check(full_text, company):
                     return True
         
         return False
+    
+    def _company_specific_filter(self, text: str, company: Dict) -> bool:
+        """Company-specific filtering to remove false positives"""
+        text_lower = text.lower()
+        company_name = company['name'].lower()
+        
+        # Finch-specific filters
+        if company_name == 'finch':
+            # Exclude if it's about people with Finch as last name
+            person_indicators = [
+                'obituary', 'died', 'death', 'funeral', 'memorial',
+                'birthday', 'anniversary', 'wedding', 'married',
+                'graduated', 'student', 'teacher', 'professor',
+                'mayor', 'politician', 'election', 'candidate',
+                'chris finch', 'beth finch', 'tess finch', 'spencer finch',
+                'christine finch', 'evelyn finch', 'elisabeth finch',
+                'real estate agent', 'coach', 'athlete', 'player',
+                'timberwolves', 'nba', 'basketball', 'sports'
+            ]
+            
+            for indicator in person_indicators:
+                if indicator in text_lower:
+                    return False
+                    
+            # Only include if it has business/tech context
+            business_keywords = [
+                'app', 'platform', 'software', 'startup', 'company',
+                'venue marketing', 'ai-powered', 'technology', 'funding'
+            ]
+            
+            has_business_context = any(keyword in text_lower for keyword in business_keywords)
+            if not has_business_context:
+                return False
+        
+        # Cerebra-specific filters (exclude cerebral palsy mentions)
+        if company_name == 'cerebra':
+            medical_indicators = [
+                'cerebral palsy', 'cerebral', 'patient', 'medical',
+                'hospital', 'treatment', 'therapy', 'disability',
+                'palsy', 'brain injury', 'neurological'
+            ]
+            
+            for indicator in medical_indicators:
+                if indicator in text_lower:
+                    return False
+                    
+            # Only include if it has AI/tech context
+            ai_keywords = [
+                'ai', 'artificial intelligence', 'machine learning',
+                'computer vision', 'startup', 'funding', 'technology'
+            ]
+            
+            has_ai_context = any(keyword in text_lower for keyword in ai_keywords)
+            if not has_ai_context:
+                return False
+        
+        return True
     
     def _additional_relevance_check(self, text: str, company: Dict) -> bool:
         """Additional checks to ensure the mention is relevant"""
@@ -156,7 +220,8 @@ class NewsMonitor:
         # Exclude common false positives
         false_positives = [
             'recipe', 'cooking', 'food blog', 'restaurant menu',
-            'weather forecast', 'sports', 'entertainment news'
+            'weather forecast', 'entertainment news', 'movie review',
+            'zelda', 'gaming', 'video game', 'nintendo'
         ]
         
         for fp in false_positives:
@@ -167,14 +232,15 @@ class NewsMonitor:
         business_indicators = [
             'startup', 'company', 'business', 'technology', 'tech',
             'funding', 'investment', 'venture', 'innovation',
-            'platform', 'software', 'service', 'solution'
+            'platform', 'software', 'service', 'solution', 'ai',
+            'artificial intelligence', 'machine learning', 'saas'
         ]
         
         for indicator in business_indicators:
             if indicator in text_lower:
                 return True
         
-        return True  # Default to including if no clear false positive
+        return False  # Default to excluding if no clear business context
     
     def monitor_all_companies(self) -> List[Dict]:
         """Monitor all portfolio companies for news mentions"""
