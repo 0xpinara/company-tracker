@@ -235,14 +235,13 @@ class MentionDatabase:
                 """, (f'%{pattern}%', f'%{pattern}%'))
                 deleted_count += cursor.rowcount
             
-            # Remove The Blue Dot false positives (Bluedot Living magazine)
-            for pattern in bluedot_false_positives:
-                cursor.execute("""
-                    DELETE FROM mentions 
-                    WHERE company_name = 'The Blue Dot' 
-                    AND (LOWER(title) LIKE ? OR LOWER(content) LIKE ? OR LOWER(source) LIKE ?)
-                """, (f'%{pattern}%', f'%{pattern}%', f'%{pattern}%'))
-                deleted_count += cursor.rowcount
+            # Remove The Blue Dot false positives (Bluedot Living magazine specifically)
+            cursor.execute("""
+                DELETE FROM mentions 
+                WHERE company_name = 'The Blue Dot' 
+                AND LOWER(source) LIKE '%bluedotliving.com%'
+            """)
+            deleted_count += cursor.rowcount
             
             conn.commit()
             logger.info(f"Removed {deleted_count} false positive mentions from database")
